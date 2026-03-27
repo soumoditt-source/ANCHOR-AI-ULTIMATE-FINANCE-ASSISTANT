@@ -1,0 +1,94 @@
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Grotesk:wght@300..700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html {
+    font-family: 'Inter', 'Space Grotesk', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: #020209;
+    color: white;
+    overflow-x: hidden;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(10, 10, 20, 0.55);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .glow-green { box-shadow: 0 0 30px rgba(0, 255, 136, 0.15); }
+  .glow-purple { box-shadow: 0 0 30px rgba(139, 92, 246, 0.2); }
+  .glow-red { box-shadow: 0 0 30px rgba(239, 68, 68, 0.15); }
+  .neon-green { text-shadow: 0 0 20px rgba(0, 255, 136, 0.5); }
+  .neon-purple { text-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+  .scrollbar-thin::-webkit-scrollbar { width: 3px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(0,255,136,0.3); border-radius: 2px; }
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,255,136,0.2); border-radius: 2px; }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  background: linear-gradient(to right, #00ff88, #0088ff);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #00ff88;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0,255,136,0.6);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(0,255,136,0.2); }
+  50% { box-shadow: 0 0 50px rgba(0,255,136,0.5); }
+}
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+.float-anim { animation: float 4s ease-in-out infinite; }
+.pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+/* Market ticker scroll */
+@keyframes scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Full screen body — individual panels scroll */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* xs breakpoint helper */
+@media (min-width: 400px) {
+  .xs\:block { display: block; }
+}
