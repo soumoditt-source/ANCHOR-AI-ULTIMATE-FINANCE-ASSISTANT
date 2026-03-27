@@ -7,11 +7,13 @@ import { useStore } from '../store/useStore';
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'INR', 'JPY', 'AUD', 'CAD'];
 
 export function Onboarding() {
-  const { setUser, addDebt } = useStore();
+  const { setUser, addDebt, currency: storeCurrency } = useStore();
   const [step, setStep] = useState(0);
-  const [profile, setProfile] = useState({ name: '', email: '', currency: 'USD', monthlyIncome: '', monthlyExpenses: '' });
+  const [profile, setProfile] = useState({ name: '', email: '', profession: '', currency: storeCurrency || 'INR', monthlyIncome: '', monthlyExpenses: '' });
   const [newDebt, setNewDebt] = useState({ name: '', balance: '', apr: '', minPayment: '' });
   const [localDebts, setLocalDebts] = useState<any[]>([]);
+  
+  const cSym = profile.currency === 'INR' ? '₹' : (profile.currency === 'USD' ? '$' : '₹');
 
   const handleProfileNext = () => {
     if (!profile.name || !profile.monthlyIncome) return;
@@ -59,9 +61,9 @@ export function Onboarding() {
             <h2 className="text-3xl font-black text-white mb-6">Your Financial Profile</h2>
             {[
               { label: 'Full Name *', key: 'name', type: 'text', placeholder: 'Alex Johnson' },
-              { label: 'Email', key: 'email', type: 'email', placeholder: 'alex@example.com' },
-              { label: 'Monthly Income ($) *', key: 'monthlyIncome', type: 'number', placeholder: '6000' },
-              { label: 'Monthly Expenses ($)', key: 'monthlyExpenses', type: 'number', placeholder: '3500' },
+              { label: 'Profession *', key: 'profession', type: 'text', placeholder: 'e.g. Software Engineer, Doctor, Student' },
+              { label: `Monthly Income (${cSym}) *`, key: 'monthlyIncome', type: 'number', placeholder: '150000' },
+              { label: `Monthly Expenses (${cSym})`, key: 'monthlyExpenses', type: 'number', placeholder: '50000' },
             ].map(field => (
               <div key={field.key}>
                 <label className="block text-white/60 text-sm mb-1">{field.label}</label>
@@ -101,10 +103,10 @@ export function Onboarding() {
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Debt Name', key: 'name', placeholder: 'Credit Card' },
-                { label: 'Balance ($)', key: 'balance', placeholder: '5200' },
+                { label: 'Debt Name', key: 'name', placeholder: 'Credit Card / Home Loan' },
+                { label: `Balance (${cSym})`, key: 'balance', placeholder: '50000' },
                 { label: 'APR (%)', key: 'apr', placeholder: '18.99' },
-                { label: 'Min Payment ($)', key: 'minPayment', placeholder: '200' },
+                { label: `Min Payment (${cSym})`, key: 'minPayment', placeholder: '2000' },
               ].map(f => (
                 <input
                   key={f.key}
@@ -124,7 +126,7 @@ export function Onboarding() {
                 {localDebts.map((d, i) => (
                   <div key={i} className="flex items-center justify-between p-3 rounded-lg glass border border-white/5 text-sm">
                     <span className="text-white font-medium">{d.name}</span>
-                    <span className="text-red-400 font-bold">${Number(d.balance).toLocaleString()}</span>
+                    <span className="text-red-400 font-bold">{cSym}{Number(d.balance).toLocaleString()}</span>
                     <button onClick={() => setLocalDebts(prev => prev.filter((_, idx) => idx !== i))}>
                       <Trash2 className="w-4 h-4 text-white/30 hover:text-red-400" />
                     </button>

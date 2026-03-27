@@ -80,8 +80,8 @@ export const Market = memo(function Market() {
     // Overlay Finnhub stock data
     const btc = crypto?.bitcoin;
     const eth = crypto?.ethereum;
-    if (btc) entries[4] = { sym: 'BTC/USD', val: Math.round(btc.usd), chg: +btc.usd_24h_change.toFixed(2), prefix: '$' };
-    if (eth) entries[5] = { sym: 'ETH/USD', val: Math.round(eth.usd), chg: +eth.usd_24h_change.toFixed(2), prefix: '$' };
+    if (btc) entries[4] = { sym: 'BTC/USD', val: Math.round(btc.c), chg: +(btc.dp || 0).toFixed(2), prefix: '$' };
+    if (eth) entries[5] = { sym: 'ETH/USD', val: Math.round(eth.c), chg: +(eth.dp || 0).toFixed(2), prefix: '$' };
     // Add Finnhub stocks
     const stocksToShow = ['AAPL', 'NVDA', 'MSFT'];
     stocksToShow.forEach(sym => {

@@ -204,11 +204,7 @@ export const useStore = create<AppState>()(
       voiceEnabled: false,
       andyTalking: false,
       tutorialComplete: false,
-      debts: [
-        { id: '1', name: 'Credit Card',   balance: 5200,  apr: 18.99, minPayment: 200, type: 'credit'  },
-        { id: '2', name: 'Student Loan',  balance: 15000, apr: 5.5,   minPayment: 450, type: 'student' },
-        { id: '3', name: 'Car Loan',      balance: 8900,  apr: 7.2,   minPayment: 320, type: 'auto'    },
-      ],
+      debts: [],
       history: [],
       microWins: [],
       dailyTarget: 25,
@@ -318,17 +314,32 @@ export const useStore = create<AppState>()(
         set({ marketLoading: true });
         try {
           const syms = ['AAPL', 'NVDA', 'MSFT', 'TSLA', 'AMZN', 'GOOGL', 'META', 'NFLX'];
+          const fhKey = import.meta.env.VITE_FINNHUB_API_KEY || '';
           const results = await Promise.all(syms.map(async sym => {
             try {
-              const r = await fetch(`/api/market?symbol=${sym}`);
+              if (!fhKey) throw new Error('No key');
+              const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${fhKey}`);
               if (!r.ok) throw new Error();
-              return [sym, (await r.json()).data];
+              const d = await r.json();
+              return [sym, { c: d.c, d: d.d, dp: d.dp }];
             } catch { return [sym, MOCK_MARKET[sym]]; }
           }));
+          
           let crypto = MOCK_CRYPTO;
+          const cgKey = import.meta.env.VITE_COINGECKO_API_KEY || '';
           try {
-            const cr = await fetch('/api/crypto?ids=bitcoin,ethereum,solana,ripple');
-            if (cr.ok) crypto = (await cr.json()).data;
+            if (cgKey) {
+              const cr = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,ripple&vs_currencies=usd&include_24hr_change=true&x_cg_demo_api_key=${cgKey}`);
+              if (cr.ok) {
+                const raw = await cr.json();
+                crypto = {
+                  BTC: { c: raw.bitcoin?.usd || 0, d: 0, dp: raw.bitcoin?.usd_24h_change || 0 },
+                  ETH: { c: raw.ethereum?.usd || 0, d: 0, dp: raw.ethereum?.usd_24h_change || 0 },
+                  SOL: { c: raw.solana?.usd || 0, d: 0, dp: raw.solana?.usd_24h_change || 0 },
+                  XRP: { c: raw.ripple?.usd || 0, d: 0, dp: raw.ripple?.usd_24h_change || 0 },
+                };
+              }
+            }
           } catch {}
           set({ market: Object.fromEntries(results), crypto, marketLoading: false, lastFetch: Date.now() });
         } catch {

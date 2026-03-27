@@ -55,7 +55,7 @@ export const WarRoom = memo(function WarRoom() {
   const generateBattlePlan = async () => {
     navigate('andy');
     setTimeout(() => sendChat(
-      `Generate my optimal debt battle plan. Strategy: ${strategy}. Total debt: ${formatMoney(total, currency)}. Monthly payment capacity: ${formatMoney(monthlyPayment, currency)}. Scenario: ${scenario}. Debts: ${debts.map(d => `${d.name} $${d.balance} @${d.apr}%`).join(', ')}. Projected debt-free: ${dateStr}. Give specific monthly actionable steps.`
+      `Generate my optimal debt battle plan. Strategy: ${strategy}. Total debt: ${formatMoney(total, currency)}. Monthly payment capacity: ${formatMoney(monthlyPayment, currency)}. Scenario: ${scenario}. Debts: ${debts.map(d => `${d.name} ${formatMoney(d.balance, currency)} @${d.apr}%`).join(', ')}. Projected debt-free: ${dateStr}. Give specific monthly actionable steps.`
     ), 400);
   };
 
@@ -170,11 +170,11 @@ export const WarRoom = memo(function WarRoom() {
               <div className="grid grid-cols-2 gap-2">
                 <input id="war-name" placeholder="Debt Name" value={form.name} onChange={handleChange('name')} style={{ gridColumn: 'span 2' }}
                   className="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#00ff88]/30" />
-                <input id="war-balance" type="number" placeholder="Balance ($)" value={form.balance} onChange={handleChange('balance')}
+                <input id="war-balance" type="number" placeholder={`Balance (${currency === 'INR' ? '₹' : (currency === 'USD' ? '$' : '₹')})`} value={form.balance} onChange={handleChange('balance')}
                   className="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#00ff88]/30" />
                 <input id="war-apr" type="number" placeholder="APR %" value={form.apr} onChange={handleChange('apr')}
                   className="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#00ff88]/30" />
-                <input id="war-min" type="number" placeholder="Min Payment ($)" value={form.minPayment} onChange={handleChange('minPayment')} style={{ gridColumn: 'span 2' }}
+                <input id="war-min" type="number" placeholder={`Min Payment (${currency === 'INR' ? '₹' : (currency === 'USD' ? '$' : '₹')})`} value={form.minPayment} onChange={handleChange('minPayment')} style={{ gridColumn: 'span 2' }}
                   className="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#00ff88]/30" />
               </div>
               <div className="flex gap-2">
