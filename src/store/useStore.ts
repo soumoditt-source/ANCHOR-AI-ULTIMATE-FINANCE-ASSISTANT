@@ -348,30 +348,46 @@ export const useStore = create<AppState>()(
         }
       },
 
-      // ─── Andy AI chat ──────────────────────────────────────────────────
       sendChat: async (msg, geminiKey = '') => {
         const userMsg: ChatMessage = { role: 'user', text: msg, ts: Date.now() };
         set(s => ({ chatMessages: [...s.chatMessages, userMsg], chatLoading: true }));
         const finish = (text: string) => {
           set(s => ({ chatMessages: [...s.chatMessages, { role: 'andy', text, ts: Date.now() }], chatLoading: false }));
-          get().andySpeak(text.replace(/[\*\#]/g, '')); // remove markdown for speech
+          get().andySpeak(text.replace(/[\*\#]/g, ''));
         };
 
-        const key = geminiKey || 'ac8ce05ba9ab3479b568fd3e29f558f12434db5d4282a2770c391ca08c666414';
+        const key = geminiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
+        if (!key) {
+          finish('⚠️ Andy AI needs a Gemini API key. Add VITE_GEMINI_API_KEY to your .env file to enable live AI responses.');
+          return;
+        }
         try {
-          const { user, debts, currency } = get();
+          const { user, debts, currency, language, appMode } = get();
           const totalDebt = debts.reduce((a, d) => a + d.balance, 0);
-          const ctx = `User: ${user?.name || 'Commander'}, Income $${user?.monthlyIncome || 5000}/mo, ${debts.length} debts totaling $${totalDebt.toLocaleString()}, Currency: ${currency}, Mode: ${get().appMode} mode.`;
+          const income = user?.monthlyIncome || 50000;
+          const lang = LANGUAGES[language]?.label || 'English';
+          const currSym = CURRENCIES[currency]?.symbol || '₹';
+          const ctx = `User: ${user?.name || 'Commander'}. Monthly income: ${currSym}${income.toLocaleString()}. ${debts.length} debts totaling ${currSym}${totalDebt.toLocaleString()}. Currency: ${currency} (${currSym}). Mode: ${appMode}. Location: India.`;
+          const systemPrompt = `You are Andy AI 🤖 — an elite personal CFO and financial advisor for India. You speak ${lang}. You are smart, warm, direct, and give actionable advice. Always use ${currency} currency with ${currSym} symbol. Apply Indian financial context: SEBI regulations, NSE/BSE markets, 80C/80D deductions, NPS, PPF, Sukanya Samriddhi, FIRE planning in Indian context, EMI culture, RBI guidelines. Context: ${ctx}\n\nUser: ${msg}\n\nRespond in 3-4 sentences, be specific, practical, and cite actual numbers. Respond in ${lang}.`;
           const res = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,
             { method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ contents: [{ parts: [{ text: `You are Andy AI, an expert CFO/financial advisor in ${LANGUAGES[get().language]?.label || 'English'}. Context: ${ctx}\n\nUser: ${msg}\n\nRespond in 2-3 sentences max, be specific and actionable. Respond in ${LANGUAGES[get().language]?.label || 'English'}.` }] }] }) }
+              body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }],
+                generationConfig: { temperature: 0.8, maxOutputTokens: 400 } }) }
           );
+          if (!res.ok) {
+            const errText = await res.text();
+            console.error('[Andy AI] Gemini API error:', res.status, errText);
+            finish(`Andy encountered an API issue (${res.status}). ${AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]}`);
+            return;
+          }
           const data = await res.json();
           const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          finish(text || AI_RESPONSES[0]);
-        } catch {
-          await new Promise(r => setTimeout(r, 600));
+          if (!text) { finish(AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]); return; }
+          finish(text);
+        } catch (err) {
+          console.error('[Andy AI] sendChat error:', err);
+          await new Promise(r => setTimeout(r, 400));
           finish(AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]);
         }
       },
@@ -379,7 +395,11 @@ export const useStore = create<AppState>()(
       // ─── Document scan ─────────────────────────────────────────────────
       scanDocument: async (base64, geminiKey = '') => {
         set({ scanLoading: true, scannedDoc: null });
-        const key = geminiKey || 'ac8ce05ba9ab3479b568fd3e29f558f12434db5d4282a2770c391ca08c666414';
+        const key = geminiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
+        if (!key) {
+          set({ scannedDoc: '⚠️ Add VITE_GEMINI_API_KEY to .env to enable document scanning.', scanLoading: false });
+          return;
+        }
         try {
           const res = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,
@@ -387,7 +407,7 @@ export const useStore = create<AppState>()(
               body: JSON.stringify({
                 contents: [{
                   parts: [
-                    { text: 'You are a financial document analyzer. Extract and summarize: amounts, dates, account names, debts owed, interest rates, payment due dates. Format as bullet points.' },
+                    { text: 'You are an expert Indian financial document analyzer. Extract ALL financial data: account numbers (masked), balances, amounts owed, interest rates, EMI amounts, payment due dates, account holder name, bank name, loan type. Then: 1) List key findings as bullet points with exact ₹ amounts. 2) Flag any urgent items (overdue, high interest). 3) Give 2 actionable recommendations.' },
                     { inline_data: { mime_type: 'image/jpeg', data: base64 } }
                   ]
                 }]
@@ -397,8 +417,9 @@ export const useStore = create<AppState>()(
           const data = await res.json();
           const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Could not extract data from document.';
           set({ scannedDoc: text, scanLoading: false });
-        } catch {
-          set({ scannedDoc: '• Could not process document. Please try a clearer image.\n• Supported: bank statements, loan letters, credit card bills.', scanLoading: false });
+        } catch (err) {
+          console.error('[Andy AI] scanDocument error:', err);
+          set({ scannedDoc: '• Could not process document. Please try a clearer image.\n• Supported: bank statements, loan letters, credit card bills, Form 16.', scanLoading: false });
         }
       },
 
