@@ -304,7 +304,7 @@ export const Planner = memo(function Planner() {
                   const h = Math.max(4, Math.round((pt.val / maxVal) * 112));
                   return (
                     <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                      <motion.div className="w-full rounded-t" style={{ height: h }}
+                      <motion.div className="w-full rounded-t"
                         initial={{ height: 0 }} animate={{ height: h }} transition={{ delay: i * 0.1, duration: 0.6 }}
                         title={`₹${(pt.val/100000).toFixed(0)}L at age ${pt.age}`}
                         style={{ background: pt.val >= fireTarget ? '#00ff88' : '#0088ff', borderRadius: '3px 3px 0 0', height: h }} />
