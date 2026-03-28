@@ -387,7 +387,7 @@ export const useStore = create<AppState>()(
           get().andySpeak(text.replace(/[\*\#]/g, ''));
         };
 
-        const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+        const finalGeminiKey = geminiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
         const orKey = import.meta.env.VITE_OPENROUTER_API_KEY || '';
         const groqKey = import.meta.env.VITE_GROQ_API_KEY || '';
         const mistralKey = import.meta.env.VITE_MISTRAL_API_KEY || '';
@@ -404,9 +404,9 @@ export const useStore = create<AppState>()(
           let responseText = '';
 
           // 1. Gemini AI Studio (Primary)
-          if (geminiKey && !responseText) {
+          if (finalGeminiKey && !responseText) {
             try {
-              const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+              const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${finalGeminiKey}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 500 } })
               });
