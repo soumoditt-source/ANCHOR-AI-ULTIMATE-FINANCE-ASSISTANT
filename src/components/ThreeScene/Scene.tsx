@@ -182,11 +182,11 @@ export function Scene({ phase = 'intro' }: { phase?: ScenePhase }) {
       <RocketStreak />
       <DataNodes />
 
-      {/* Deep starfield */}
-      <Stars radius={60} depth={50} count={phase === 'intro' ? 5000 : 2500} factor={3} saturation={0} fade speed={0.5} />
+      {/* Deep starfield (Fixed buffer size to prevent GPU thrashing) */}
+      <Stars radius={60} depth={50} count={3500} factor={3} saturation={0} fade speed={0.5} />
 
-      {/* Sparkles */}
-      <Sparkles count={phase === 'intro' ? 300 : 100} scale={16} size={1.6} speed={0.2} opacity={0.1} color="#00ff88" />
+      {/* Sparkles (Fixed buffer size to prevent Aw Snap crashes) */}
+      <Sparkles count={150} scale={16} size={1.6} speed={0.2} opacity={0.1} color="#00ff88" />
     </Canvas>
   );
 }
