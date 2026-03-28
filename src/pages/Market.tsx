@@ -4,7 +4,7 @@
 // Falls back to rich mock data if keys not set
 import { memo, useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, RefreshCw, Bot, Zap, Activity, Globe } from 'lucide-react';
+import { TrendingUp, TrendingDown, RefreshCw, Bot, Zap, Activity, Globe, Radar, LineChart } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 const FINNHUB_KEY = import.meta.env.VITE_FINNHUB_API_KEY || '';
@@ -244,6 +244,37 @@ export const Market = memo(function Market() {
               className="text-[9px] text-white/30 hover:text-white/60 border border-white/[0.06] px-2 py-0.5 rounded-full transition-colors">
               {q}
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* AI Chart Pattern Intelligence */}
+      <div className="glass rounded-2xl p-5 border border-[#00ff88]/20 bg-[#00ff88]/[0.02] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#00ff88]/10 rounded-full blur-3xl -mr-10 -mt-10" />
+        <div className="flex items-center gap-2 mb-3 relative z-10">
+          <LineChart className="w-5 h-5 text-[#00ff88]" />
+          <p className="text-sm font-bold text-white">Chart Pattern Intelligence</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 relative z-10">
+          {[
+            { tag: 'Bullish', pattern: 'Cup & Handle', asset: 'ZOMATO', confidence: 88, desc: 'Breaking out of 4-week consolidation.' },
+            { tag: 'Bearish', pattern: 'Head & Shoulders', asset: 'HDFCBANK', confidence: 72, desc: 'Right shoulder forming near 1450 resistance.' },
+            { tag: 'Neutral', pattern: 'Symmetrical Triangle', asset: 'RELIANCE', confidence: 65, desc: 'Awaiting breakout volume.' },
+            { tag: 'Bullish', pattern: 'Golden Cross', asset: 'BTC/USD', confidence: 94, desc: '50 DMA crossing 200 DMA.' }
+          ].map(p => (
+            <motion.div key={p.asset} 
+              onClick={() => deepDive(`Analyze the ${p.pattern} pattern forming on ${p.asset}. What's the trade setup?`)}
+              whileHover={{ scale: 1.02 }} className="glass p-3 rounded-xl border border-white/[0.05] cursor-pointer hover:border-[#00ff88]/30 transition-all">
+              <div className="flex justify-between items-start mb-1">
+                <p className="text-xs font-black text-white">{p.asset}</p>
+                <div className="flex items-center gap-1">
+                  <span className={`w-1.5 h-1.5 rounded-full ${p.tag === 'Bullish' ? 'bg-[#00ff88]' : p.tag === 'Bearish' ? 'bg-red-500' : 'bg-amber-400'}`} />
+                  <span className="text-[9px] text-white/50">{p.confidence}%</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-[#22d3ee] font-mono mb-1">{p.pattern}</p>
+              <p className="text-[9px] text-white/40 leading-snug">{p.desc}</p>
+            </motion.div>
           ))}
         </div>
       </div>

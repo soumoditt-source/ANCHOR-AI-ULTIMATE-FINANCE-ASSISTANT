@@ -97,10 +97,9 @@ const ICO_CONFIGS = [
   { pos: [5.5, -0.5, -5] as [number,number,number], scale: 0.22, speed: 0.18, color: '#8b5cf6' },
   { pos: [-5.0, 1.0, -3] as [number,number,number], scale: 0.32, speed: -0.12, color: '#22d3ee' },
 ];
-const sharedIcoGeo = new THREE.IcosahedronGeometry(1, 0);
-
 function FloatingIco({ pos, scale, speed, color }: typeof ICO_CONFIGS[0]) {
   const ref = useRef<THREE.Mesh>(null);
+  const geo = useMemo(() => new THREE.IcosahedronGeometry(1, 0), []);
   const mat = useMemo(() => new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity: 0.5 }), [color]);
   useFrame(({ clock }) => {
     if (!ref.current) return;
@@ -109,7 +108,7 @@ function FloatingIco({ pos, scale, speed, color }: typeof ICO_CONFIGS[0]) {
     ref.current.rotation.y = t * speed * 0.7;
     ref.current.position.y = pos[1] + Math.sin(t * 0.5 + pos[0]) * 0.28;
   });
-  return <mesh ref={ref} position={pos} scale={scale} geometry={sharedIcoGeo} material={mat} />;
+  return <mesh ref={ref} position={pos} scale={scale} geometry={geo} material={mat} />;
 }
 
 // ── Rocket Streak ─────────────────────────────────────────────────────────────
@@ -144,17 +143,17 @@ function RocketStreak() {
 
 // ── Pulsing Data Nodes ────────────────────────────────────────────────────────
 const NODE_POS: [number,number,number][] = [[-7,4,-8],[7,-3,-9],[-6,-5,-7],[8,2,-10],[-8,0,-11]];
-const sharedNodeGeo = new THREE.SphereGeometry(0.07, 8, 8);
-const sharedNodeMat = new THREE.MeshBasicMaterial({ color: '#00ff88', transparent: true, opacity: 0.75 });
-
 function DataNodes() {
   const refs = useRef<THREE.Mesh[]>([]);
+  const geo = useMemo(() => new THREE.SphereGeometry(0.07, 8, 8), []);
+  const mat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#00ff88', transparent: true, opacity: 0.75 }), []);
+
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
     refs.current.forEach((m, i) => { if (m) m.scale.setScalar(1 + Math.sin(t * 1.4 + i * 1.3) * 0.35); });
   });
   return (
-    <>{NODE_POS.map((p, i) => <mesh key={i} ref={el => { refs.current[i] = el; }} position={p} geometry={sharedNodeGeo} material={sharedNodeMat} />)}</>
+    <>{NODE_POS.map((p, i) => <mesh key={i} ref={el => { if (el) refs.current[i] = el; }} position={p} geometry={geo} material={mat} />)}</>
   );
 }
 

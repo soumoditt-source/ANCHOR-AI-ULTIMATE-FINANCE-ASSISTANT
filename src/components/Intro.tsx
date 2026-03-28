@@ -120,7 +120,7 @@ export function Intro() {
   }, [launching, setView]);
 
   return (
-    <div ref={containerRef} className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+    <div ref={containerRef} className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-y-auto overflow-x-hidden">
 
       {/* ── VIDEO LAYER ── */}
       <div className="absolute inset-0 z-0">
@@ -171,18 +171,18 @@ export function Intro() {
 
       {/* ── HERO CONTENT ── */}
       <motion.div
-        className="relative z-10 flex flex-col items-center text-center px-6 max-w-5xl mx-auto"
+        className="relative z-10 flex flex-col items-center text-center px-6 max-w-5xl mx-auto py-12 md:py-0 mt-20 md:mt-0"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Logo mark — floating */}
         <motion.div
-          className="relative mb-8"
-          animate={{ y: [0, -12, 0] }}
+          className="relative mb-4 md:mb-8"
+          animate={{ y: [0, -8, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-[#00ff88] via-[#00cc6a] to-[#0088ff] flex items-center justify-center"
+          <div className="w-20 h-20 md:w-28 md:h-28 rounded-3xl bg-gradient-to-br from-[#00ff88] via-[#00cc6a] to-[#0088ff] flex items-center justify-center"
             style={{ boxShadow: '0 0 80px rgba(0,255,136,0.5), 0 0 160px rgba(0,255,136,0.2)' }}>
             <Anchor className="w-14 h-14 text-black" strokeWidth={2.5} />
           </div>
@@ -196,45 +196,45 @@ export function Intro() {
 
         {/* ANCHOR AI title */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <h1 className="text-[clamp(3.5rem,14vw,9rem)] font-black tracking-tighter leading-none mb-2">
+          <h1 className="text-[clamp(3rem,10vw,8rem)] font-black tracking-tighter leading-none mb-1 md:mb-2 mt-4 md:mt-0">
             <span className="text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]">ANCHOR</span>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00ff88] via-[#00ddff] to-[#8b5cf6]"
               style={{ WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 30px rgba(0,255,136,0.4))' }}> AI</span>
           </h1>
-          <motion.p className="text-[#00ff88]/60 font-mono text-sm tracking-[0.45em] uppercase mb-2"
+          <motion.p className="text-[#00ff88]/60 font-mono text-xs md:text-sm tracking-[0.2em] md:tracking-[0.45em] uppercase mb-4 md:mb-6"
             animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 3, repeat: Infinity }}>
             Gen AI Money Mentor · ET Hackathon 2026 · India's CFO for Everyone
           </motion.p>
         </motion.div>
 
-        <motion.p className="text-white/45 text-lg max-w-2xl mb-10 leading-relaxed"
+        <motion.p className="text-white/50 text-base md:text-lg max-w-2xl mb-6 md:mb-8 leading-relaxed"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
           95% of Indians have no financial plan. Financial advisors cost ₹25,000+ per year.<br/>
-          <span className="text-[#00ff88]/70">Andy AI is your always-on CFO — free, multilingual, and smarter than Wall Street.</span>
+          <span className="text-[#00ff88]">Andy AI is your always-on CFO — free, multilingual, and smarter than Wall Street.</span>
         </motion.p>
 
         {/* Stats row */}
-        <motion.div className="flex items-center gap-6 mb-10"
+        <motion.div className="flex flex-wrap justify-center items-center gap-4 md:gap-6 mb-6 md:mb-8"
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }}>
           {STATS.map((s, i) => (
             <div key={i} className="flex flex-col items-center">
-              <span className="text-3xl font-black text-white" style={{ textShadow: '0 0 20px rgba(0,255,136,0.4)' }}>{s.val}</span>
-              <span className="text-[10px] text-white/30 font-mono uppercase">{s.label}</span>
+              <span className="text-2xl md:text-3xl font-black text-white" style={{ textShadow: '0 0 20px rgba(0,255,136,0.4)' }}>{s.val}</span>
+              <span className="text-[9px] md:text-[10px] text-white/30 font-mono uppercase">{s.label}</span>
             </div>
           ))}
         </motion.div>
 
         {/* Feature pills */}
-        <motion.div className="flex flex-wrap justify-center gap-2.5 mb-12"
+        <motion.div className="flex flex-wrap justify-center gap-2 mb-8 md:mb-10"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }}>
           {FEATURES.map((f, i) => (
             <motion.div key={i}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl glass border border-white/[0.07]"
+              className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl glass border border-white/[0.07]"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 + i * 0.1 }}>
-              <f.icon className="w-4 h-4 text-[#00ff88]" />
-              <span className="text-white/70 text-sm">{f.label}</span>
+              <f.icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#00ff88]" />
+              <span className="text-white/70 text-xs md:text-sm">{f.label}</span>
             </motion.div>
           ))}
         </motion.div>
@@ -245,7 +245,7 @@ export function Intro() {
             <motion.button
               key="cta"
               onClick={handleLaunch}
-              className="group relative flex items-center gap-3 px-14 py-5 rounded-2xl text-black font-black text-xl overflow-hidden"
+              className="group relative flex items-center gap-2 md:gap-3 px-8 py-3.5 md:px-14 md:py-5 rounded-2xl text-black font-black text-lg md:text-xl overflow-hidden"
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
@@ -283,7 +283,7 @@ export function Intro() {
         </AnimatePresence>
 
         {/* Bottom trust badges */}
-        <motion.div className="mt-10 flex flex-wrap justify-center items-center gap-4 text-white/20 text-xs font-mono"
+        <motion.div className="mt-6 md:mt-10 flex flex-wrap justify-center items-center gap-3 md:gap-4 text-white/20 text-[10px] md:text-xs font-mono"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}>
           {['Finnhub Markets', 'Gemini AI', 'CoinGecko Crypto', 'Supabase Auth', 'Web Speech API'].map((t, i) => (
             <span key={i} className="flex items-center gap-1.5">

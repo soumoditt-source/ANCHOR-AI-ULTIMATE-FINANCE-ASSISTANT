@@ -231,30 +231,50 @@ export const useStore = create<AppState>()(
       scanLoading: false,
       firstGreetingDone: false,
 
-      andySpeak: (text) => {
+      andySpeak: async (text) => {
         const { voiceEnabled, language, setAndyTalking } = get();
-        if (!voiceEnabled || !('speechSynthesis' in window)) return;
+        if (!voiceEnabled) return;
         
         setAndyTalking(true);
-        const utt = new SpeechSynthesisUtterance(text);
-        utt.lang = LANGUAGES[language]?.code || 'en-US';
-        
-        const voices = window.speechSynthesis.getVoices();
-        const shortLang = utt.lang.split('-')[0];
-        // Try to find a premium/natural voice for the language
-        const premium = voices.find(v => v.lang.startsWith(shortLang) && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Online') || v.name.includes('Premium')));
-        const fallback = voices.find(v => v.lang.startsWith(shortLang));
-        
-        if (premium) utt.voice = premium;
-        else if (fallback) utt.voice = fallback;
-        
-        utt.rate = 1.0;
-        utt.pitch = 1.05;
-        utt.onend = () => setAndyTalking(false);
-        utt.onerror = () => setAndyTalking(false);
-        
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utt);
+
+        const fallbackSpeak = () => {
+          if (!('speechSynthesis' in window)) {
+            setAndyTalking(false);
+            return;
+          }
+          const utt = new SpeechSynthesisUtterance(text);
+          utt.lang = LANGUAGES[language]?.code || 'en-US';
+          const voices = window.speechSynthesis.getVoices();
+          const shortLang = utt.lang.split('-')[0];
+          const premium = voices.find(v => v.lang.startsWith(shortLang) && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium')));
+          const fallback = voices.find(v => v.lang.startsWith(shortLang));
+          if (premium) utt.voice = premium;
+          else if (fallback) utt.voice = fallback;
+          utt.rate = 1.0;
+          utt.pitch = 1.05;
+          utt.onend = () => setAndyTalking(false);
+          utt.onerror = () => setAndyTalking(false);
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utt);
+        };
+
+        try {
+          // Attempt the massive free power of Puter.js text-to-speech first
+          // @ts-ignore
+          if (window.puter) {
+            // @ts-ignore
+            const audioUrl = await window.puter.ai.txt2speech(text);
+            const audio = new Audio(audioUrl);
+            audio.onended = () => setAndyTalking(false);
+            audio.onerror = fallbackSpeak;
+            audio.play();
+            return;
+          }
+        } catch (err) {
+          console.warn('Puter TTS failed, falling back to browser synthesis.');
+        }
+
+        fallbackSpeak();
       },
 
       // ─── Navigation ────────────────────────────────────────────────────
@@ -368,10 +388,7 @@ export const useStore = create<AppState>()(
         };
 
         const key = geminiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
-        if (!key) {
-          finish('⚠️ Andy AI needs a Gemini API key. Add VITE_GEMINI_API_KEY to your .env file to enable live AI responses.');
-          return;
-        }
+        
         try {
           const { user, debts, currency, language, appMode } = get();
           const totalDebt = debts.reduce((a, d) => a + d.balance, 0);
@@ -380,6 +397,19 @@ export const useStore = create<AppState>()(
           const currSym = CURRENCIES[currency]?.symbol || '₹';
           const ctx = `User: ${user?.name || 'Commander'}. Monthly income: ${currSym}${income.toLocaleString()}. ${debts.length} debts totaling ${currSym}${totalDebt.toLocaleString()}. Currency: ${currency} (${currSym}). Mode: ${appMode}. Location: India.`;
           const systemPrompt = `You are Andy AI 🤖 — an elite personal CFO and financial advisor for India. You speak ${lang}. You are smart, warm, direct, and give actionable advice. Always use ${currency} currency with ${currSym} symbol. Apply Indian financial context: SEBI regulations, NSE/BSE markets, 80C/80D deductions, NPS, PPF, Sukanya Samriddhi, FIRE planning in Indian context, EMI culture, RBI guidelines. Context: ${ctx}\n\nUser: ${msg}\n\nRespond in 3-4 sentences, be specific, practical, and cite actual numbers. Respond in ${lang}.`;
+          
+          // Free Multi-Agent / Mistral Fallback via Puter if no API Key!
+          // @ts-ignore
+          if (!key && window.puter) {
+            // @ts-ignore
+            const res = await window.puter.ai.chat(systemPrompt, { model: 'claude-3-5-sonnet' });
+            finish(res?.text || res?.message?.content || String(res) || AI_RESPONSES[0]);
+            return;
+          } else if (!key) {
+            finish('⚠️ No Gemini API key found, and Puter.js failed to load. Please add VITE_GEMINI_API_KEY.');
+            return;
+          }
+
           const res = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,
             { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -389,7 +419,7 @@ export const useStore = create<AppState>()(
           if (!res.ok) {
             const errText = await res.text();
             console.error('[Andy AI] Gemini API error:', res.status, errText);
-            finish(`Andy encountered an API issue (${res.status}). ${AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]}`);
+            finish(`Andy encountered an API issue (${res.status}). Let's get back to basics: ${AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]}`);
             return;
           }
           const data = await res.json();
@@ -407,11 +437,17 @@ export const useStore = create<AppState>()(
       scanDocument: async (base64, geminiKey = '') => {
         set({ scanLoading: true, scannedDoc: null });
         const key = geminiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
-        if (!key) {
-          set({ scannedDoc: '⚠️ Add VITE_GEMINI_API_KEY to .env to enable document scanning.', scanLoading: false });
-          return;
-        }
+        
         try {
+          // Free Multi-agent fallback Puter capability for Vision
+          // @ts-ignore
+          if (!key && window.puter) {
+            set({ scanLoading: false, scannedDoc: '⚠️ Document Vision requires Gemini Flash 1.5. Please add VITE_GEMINI_API_KEY inside .env. (Puter text AI is active, but Vision needs Gemini key for Form 16s/Statements).' });
+            return;
+          } else if (!key) {
+            set({ scannedDoc: '⚠️ Add VITE_GEMINI_API_KEY to .env to enable document scanning.', scanLoading: false });
+            return;
+          }
           const res = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,
             { method: 'POST', headers: { 'Content-Type': 'application/json' },

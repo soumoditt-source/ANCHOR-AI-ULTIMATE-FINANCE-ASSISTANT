@@ -4,19 +4,16 @@ import { useStore } from '../store/useStore';
 import { Anchor } from 'lucide-react';
 
 export default function IntroScreen() {
-  const setCurrentView = useStore(state => state.setCurrentView);
-  const fetchAllData = useStore(state => state.fetchAllData);
+  const setView = useStore(state => state.setView);
 
   useEffect(() => {
-    // Kick off data sync
-    fetchAllData();
     // Advance to onboarding after 3.5s cinematic intro
     const timer = setTimeout(() => {
       // In a real app we'd check if user is already onboarded. We'll simulate going to onboarding for the authentic flow.
-      setCurrentView('onboarding');
+      setView('onboard');
     }, 3500);
     return () => clearTimeout(timer);
-  }, [setCurrentView, fetchAllData]);
+  }, [setView]);
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-cyber-black">

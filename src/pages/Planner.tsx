@@ -1,9 +1,8 @@
 // @ts-nocheck
-// pages/Planner.tsx — FIRE Path Planner + Tax Wizard + Life Event Advisor
-// Three fully working tabs addressing ET Gen AI PS1 deliverables directly
+// pages/Planner.tsx — Core Financial Planner for ET Hackathon Additions
 import { memo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Rocket, Bot, Target, Calculator, FileText, Heart, Upload, CheckCircle } from 'lucide-react';
+import { Rocket, Bot, Target, Calculator, FileText, Heart, Upload, CheckCircle, Users, ScanSearch } from 'lucide-react';
 import { useStore, formatMoney } from '../store/useStore';
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -45,18 +44,20 @@ function calcNewRegimeTax(income: number): number {
 // ─── Life Events ─────────────────────────────────────────────────────────────
 const LIFE_EVENTS = [
   { id: 'bonus', icon: '💰', label: 'Received Bonus', prompt: 'I got a bonus of ₹{amount}. I am in the {tax} tax bracket, have {debt} debt, and want to {goal}. How should I optimally allocate this bonus across debt payoff, investment, emergency fund, and tax saving?' },
-  { id: 'baby', icon: '👶', label: 'New Baby Coming', prompt: 'I am expecting a baby. My monthly income is ₹{amount}. Guide me on: child insurance, Sukanya Samriddhi Yojana, SIP for education corpus, HRA optimization, and increasing emergency fund.' },
-  { id: 'marriage', icon: '💍', label: 'Getting Married', prompt: 'I am getting married. My income is ₹{amount}/month, partner earns ₹{partner}. Help me plan: joint vs separate accounts, HRA optimization, NPS matching, combined insurance, joint SIP strategy.' },
-  { id: 'inheritance', icon: '🏛️', label: 'Inheritance / Windfall', prompt: 'I received ₹{amount} as inheritance/windfall. Tax implications in India? Should I pay off debt? Invest in equity/debt? ELSS for tax saving? Index funds? Real estate? Give me a 12-month plan.' },
-  { id: 'job_loss', icon: '⚡', label: 'Job Loss / Career Break', prompt: 'I lost my job. Monthly expenses are ₹{amount}. Emergency fund: ₹{emergency}. Debts: ₹{debt}. How do I survive 6-12 months financially while job hunting? EPFO withdrawal rules? NPS partial withdrawal?' },
-  { id: 'home', icon: '🏠', label: 'Buying First Home', prompt: 'I want to buy a home worth ₹{amount}. Income: ₹{income}/month. Down payment: ₹{down}. Give me: home loan EMI planning, 80C/24b tax deductions, rent vs buy analysis, and impact on my FIRE timeline.' },
+  { id: 'baby', icon: '👶', label: 'New Baby', prompt: 'I am expecting a baby. My monthly income is ₹{amount}. Guide me on: child insurance, Sukanya Samriddhi Yojana, SIP for education corpus, HRA optimization, and increasing emergency fund.' },
+  { id: 'marriage', icon: '💍', label: 'Marriage', prompt: 'I am getting married. My income is ₹{amount}/month, partner earns ₹{partner}. Help me plan: joint vs separate accounts, HRA optimization, NPS matching, combined insurance, joint SIP strategy.' },
+  { id: 'inheritance', icon: '🏛️', label: 'Inheritance', prompt: 'I received ₹{amount} as inheritance/windfall. Tax implications in India? Should I pay off debt? Invest in equity/debt? ELSS for tax saving? Index funds? Real estate? Give me a 12-month plan.' },
+  { id: 'job_loss', icon: '⚡', label: 'Job Loss', prompt: 'I lost my job. Monthly expenses are ₹{amount}. Emergency fund: ₹{emergency}. Debts: ₹{debt}. How do I survive 6-12 months financially while job hunting? EPFO withdrawal rules? NPS partial withdrawal?' },
+  { id: 'home', icon: '🏠', label: 'Buying Home', prompt: 'I want to buy a home worth ₹{amount}. Income: ₹{income}/month. Down payment: ₹{down}. Give me: home loan EMI planning, 80C/24b tax deductions, rent vs buy analysis, and impact on my FIRE timeline.' },
 ];
 
 // ─── Tab Components ───────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'fire', Icon: Rocket, label: 'FIRE Planner' },
+  { id: 'fire', Icon: Rocket, label: 'FIRE' },
   { id: 'tax', Icon: Calculator, label: 'Tax Wizard' },
-  { id: 'life', Icon: Heart, label: 'Life Events' },
+  { id: 'couple', Icon: Users, label: 'Couples' },
+  { id: 'xray', Icon: ScanSearch, label: 'MF X-Ray' },
+  { id: 'life', Icon: Heart, label: 'Events' },
 ];
 
 export const Planner = memo(function Planner() {
@@ -65,7 +66,7 @@ export const Planner = memo(function Planner() {
   const currency = useStore((s) => s.currency);
   const user = useStore((s) => s.user);
 
-  const [tab, setTab] = useState<'fire' | 'tax' | 'life'>('fire');
+  const [tab, setTab] = useState<'fire' | 'tax' | 'couple' | 'xray' | 'life'>('fire');
 
   // ─── FIRE state ─────────────────────────────────────────────────────
   const [fireParams, setFireParams] = useState({
@@ -112,6 +113,12 @@ export const Planner = memo(function Planner() {
     setTaxLoading(true);
     try {
       const key = GEMINI_KEY;
+      // @ts-ignore
+      if (!key && window.puter) {
+        setTaxLoading(false);
+        setTaxAnalysis('⚠️ Form 16 Vision requires Gemini Flash 1.5. Add VITE_GEMINI_API_KEY inside .env.');
+        return;
+      }
       if (!key) { setTaxAnalysis('Add VITE_GEMINI_API_KEY to enable Form 16 AI analysis.'); setTaxLoading(false); return; }
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,
@@ -145,6 +152,65 @@ export const Planner = memo(function Planner() {
     setTimeout(() => sendChat(
       `Tax Wizard analysis: Annual income ₹${(taxParams.annualIncome/100000).toFixed(1)}L. Deductions: 80C ₹${taxParams.sec80c/1000}K, NPS ₹${taxParams.nps/1000}K, HRA ₹${taxParams.hra/1000}K, Mediclaim ₹${taxParams.mediclaim/1000}K. Old regime tax: ₹${oldTax.toLocaleString()}. New regime tax: ₹${newTax.toLocaleString()}. Best: ${bestRegime} regime saves ₹${taxSavingAbs.toLocaleString()}. Give me a complete tax optimization strategy for FY2024-25 including missing deductions I should be claiming.`
     ), 400);
+  };
+
+  // ─── Couple's Planner state ──────────────────────────────────────────
+  const [coupleParams, setCoupleParams] = useState({
+    income1: 1500000, income2: 1200000, 
+    hra1: 200000, hra2: 150000,
+    nps1: 50000, nps2: 50000,
+    jointSip: 50000
+  });
+  const setCP = (k: string) => (val: number) => setCoupleParams(p => ({ ...p, [k]: val }));
+  
+  const askCouplesPlanner = () => {
+    navigate('andy');
+    setTimeout(() => sendChat(
+      `Couple's Planner: Partner 1 makes ₹${coupleParams.income1.toLocaleString()}/yr, HRA ₹${coupleParams.hra1.toLocaleString()}, NPS ₹${coupleParams.nps1.toLocaleString()}. Partner 2 makes ₹${coupleParams.income2.toLocaleString()}/yr, HRA ₹${coupleParams.hra2.toLocaleString()}, NPS ₹${coupleParams.nps2.toLocaleString()}. Joint SIP: ₹${coupleParams.jointSip.toLocaleString()}/mo. Give us a combined tax optimization strategy: who should claim HRA? How should we split the SIP? What joint insurance do we need?`
+    ), 400);
+  };
+
+  // ─── MF X-Ray state ────────────────────────────────────────────────
+  const [mfFile, setMfFile] = useState<string | null>(null);
+  const [mfAnalysis, setMfAnalysis] = useState('');
+  const [mfLoading, setMfLoading] = useState(false);
+
+  const analyzeMfDoc = useCallback(async (base64: string) => {
+    setMfLoading(true);
+    try {
+      const key = GEMINI_KEY;
+      // @ts-ignore
+      if (!key && window.puter) {
+        setMfLoading(false);
+        setMfAnalysis('⚠️ CAMS Document Vision requires Gemini Flash 1.5. Add VITE_GEMINI_API_KEY inside .env.');
+        return;
+      }
+      if (!key) { setMfAnalysis('Add VITE_GEMINI_API_KEY to enable CAMS AI analysis.'); setMfLoading(false); return; }
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [
+            { text: "You are an expert Indian Mutual Fund analyst. Analyze this CAMS/KFintech statement. 1) Estimate true XIRR and asset allocation. 2) Identify any overlapping funds (e.g., too many large caps). 3) Point out high expense ratio drag. 4) Give a strict AI-generated rebalancing plan." },
+            { inline_data: { mime_type: 'image/jpeg', data: base64 } }
+          ]}]})
+        }
+      );
+      const data = await res.json();
+      setMfAnalysis(data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Could not analyze document.');
+    } catch { setMfAnalysis('Error analyzing document. Please check your API key.'); }
+    setMfLoading(false);
+  }, []);
+
+  const handleMfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = (ev.target?.result as string).split(',')[1];
+      setMfFile(file.name);
+      analyzeMfDoc(base64);
+    };
+    reader.readAsDataURL(file);
   };
 
   // ─── Life Event state ────────────────────────────────────────────────
@@ -182,14 +248,14 @@ export const Planner = memo(function Planner() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black text-white">Financial Planner</h1>
-        <p className="text-[10px] text-white/30 font-mono uppercase mt-0.5">FIRE · Tax Wizard · Life Events — AI India CFO</p>
+        <p className="text-[10px] text-white/30 font-mono uppercase mt-0.5">FIRE · Tax · Couples · MF X-Ray</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 glass rounded-xl p-1">
+      <div className="flex gap-1 glass rounded-xl p-1 overflow-x-auto scroller-hide touch-manipulation">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id as any)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-bold transition-all ${tab === t.id ? 'bg-[#00ff88]/15 text-[#00ff88] border border-[#00ff88]/20' : 'text-white/30 hover:text-white/60'}`}>
+            className={`shrink-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${tab === t.id ? 'bg-[#00ff88]/15 text-[#00ff88] border border-[#00ff88]/20' : 'text-white/30 hover:text-white/60'}`}>
             <t.Icon className="w-3 h-3" />
             {t.label}
           </button>
@@ -357,10 +423,105 @@ export const Planner = memo(function Planner() {
           </motion.div>
         )}
 
+        {/* ─── COUPLE'S PLANNER TAB ───────────────────────── */}
+        {tab === 'couple' && (
+          <motion.div key="couple" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
+            <div className="glass rounded-xl p-3 border border-amber-400/20 bg-amber-400/[0.04]">
+              <p className="text-xs font-bold text-amber-400">
+                India's first AI-powered joint financial planning tool. Optimize across both incomes for massive tax savings.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="glass rounded-2xl p-4 space-y-3">
+                <p className="text-xs font-black text-[#00ff88]">Partner 1</p>
+                {[
+                  { k: 'income1', label: 'Income', max: 5000000 },
+                  { k: 'hra1', label: 'HRA', max: 500000 },
+                  { k: 'nps1', label: 'NPS', max: 50000 },
+                ].map(s => (
+                  <div key={s.k}>
+                    <p className="text-[9px] text-white/40">{s.label}: ₹{((coupleParams as any)[s.k]/1000).toFixed(0)}K</p>
+                    <input type="range" min={0} max={s.max} step={1000} value={(coupleParams as any)[s.k]}
+                      onChange={e => setCP(s.k)(+e.target.value)} className="w-full accent-[#00ff88]" />
+                  </div>
+                ))}
+              </div>
+              <div className="glass rounded-2xl p-4 space-y-3">
+                <p className="text-xs font-black text-[#22d3ee]">Partner 2</p>
+                {[
+                  { k: 'income2', label: 'Income', max: 5000000 },
+                  { k: 'hra2', label: 'HRA', max: 500000 },
+                  { k: 'nps2', label: 'NPS', max: 50000 },
+                ].map(s => (
+                  <div key={s.k}>
+                    <p className="text-[9px] text-white/40">{s.label}: ₹{((coupleParams as any)[s.k]/1000).toFixed(0)}K</p>
+                    <input type="range" min={0} max={s.max} step={1000} value={(coupleParams as any)[s.k]}
+                      onChange={e => setCP(s.k)(+e.target.value)} className="w-full accent-[#22d3ee]" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="glass rounded-2xl p-4">
+               <p className="text-[10px] text-white/40">Joint Monthly SIP Investment: ₹{(coupleParams.jointSip/1000).toFixed(0)}K</p>
+               <input type="range" min={5000} max={500000} step={5000} value={coupleParams.jointSip}
+                  onChange={e => setCP('jointSip')(+e.target.value)} className="w-full mt-2 accent-white" />
+            </div>
+
+            <motion.button onClick={askCouplesPlanner} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-sm text-black"
+              style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)' }}>
+              <Bot className="w-4 h-4 text-white" />
+              <span className="text-white">Generate Joint Tax & SIP Strategy</span>
+            </motion.button>
+          </motion.div>
+        )}
+
+        {/* ─── MF X-RAY TAB ─────────────────────────────────── */}
+        {tab === 'xray' && (
+          <motion.div key="xray" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
+             <div className="glass rounded-xl p-3 border border-amber-400/20 bg-amber-400/[0.04]">
+              <p className="text-xs font-bold text-amber-400">
+                Upload your CAMS / KFintech statement. Andy AI will analyze overlap, expense ratio drag, and true XIRR in 10 seconds.
+              </p>
+            </div>
+
+            <div className="glass rounded-2xl p-4 border border-dashed border-white/10">
+              <label className="flex flex-col items-center justify-center gap-2 py-6 cursor-pointer">
+                <input type="file" accept="image/*,.pdf" className="hidden" onChange={handleMfUpload} />
+                {mfFile ? (
+                  <div className="flex items-center gap-2 text-[#22d3ee]">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="text-sm font-bold">{mfFile}</span>
+                  </div>
+                ) : (
+                  <>
+                    <ScanSearch className="w-8 h-8 text-white/20" />
+                    <p className="text-xs text-white/30 text-center">Drop Mutual Fund Portfolio (CAMS pdf / image) here</p>
+                  </>
+                )}
+              </label>
+              {mfLoading && (
+                <div className="flex items-center gap-2 text-[#22d3ee] text-xs mt-2">
+                  <motion.div className="w-3 h-3 border-2 border-[#22d3ee] border-t-transparent rounded-full" animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity }} />
+                  Processing Portfolio Overlap & XIRR...
+                </div>
+              )}
+              {mfAnalysis && !mfLoading && (
+                <div className="mt-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                  <p className="text-[10px] text-[#22d3ee]/60 font-mono mb-2">MF Portfolio X-Ray Results</p>
+                  <p className="text-xs text-white/60 leading-relaxed whitespace-pre-line">{mfAnalysis}</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* ─── LIFE EVENTS TAB ──────────────────────────────── */}
         {tab === 'life' && (
           <motion.div key="life" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
-            <p className="text-xs text-white/40">Select your life event and Andy AI will give you a personalized financial action plan.</p>
+            <p className="text-xs text-white/40">Select your life event and Andy AI will give you a personalized action plan.</p>
             <div className="grid grid-cols-2 gap-2">
               {LIFE_EVENTS.map(ev => (
                 <motion.button key={ev.id} onClick={() => setSelectedEvent(selectedEvent === ev.id ? null : ev.id)}
@@ -393,9 +554,9 @@ export const Planner = memo(function Planner() {
                         </div>
                         <motion.button onClick={askLifeEvent} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-sm text-black"
-                          style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)' }}>
-                          <Bot className="w-4 h-4 text-white" />
-                          <span className="text-white">Get My {ev.label} Financial Plan</span>
+                          style={{ background: 'linear-gradient(135deg, #00ff88, #22d3ee)' }}>
+                          <Bot className="w-4 h-4 text-black" />
+                          <span className="text-black">Get My {ev.label} Plan</span>
                         </motion.button>
                       </>
                     );
