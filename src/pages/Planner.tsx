@@ -2,8 +2,8 @@
 // pages/Planner.tsx — Core Financial Planner for ET Hackathon Additions
 import { memo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Rocket, Bot, Target, Calculator, FileText, Heart, Upload, CheckCircle, Users, ScanSearch } from 'lucide-react';
-import { useStore, formatMoney } from '../store/useStore';
+import { Rocket, Bot, Calculator, Heart, Upload, CheckCircle, Users, ScanSearch } from 'lucide-react';
+import { useStore } from '../store/useStore';
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
