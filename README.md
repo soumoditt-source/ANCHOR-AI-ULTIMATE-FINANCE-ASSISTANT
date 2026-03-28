@@ -3,7 +3,7 @@
 <img src="public/anchor-hero.png" width="120" alt="Anchor AI Logo" />
 
 # 🪝 ANCHOR AI — Wealth OS
-<img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjRteDdqMnpqYWN0aHF0OGc2M2YwcWpxdmM0NXk3Ym9xcXJjcjJhMyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Lsj3uX6TUSqZq/giphy.gif" width="100%" height="200" style="object-fit:cover; border-radius:12px; margin: 16px 0;" alt="RGB Cyber Architecture" />
+<img src="https://i.giphy.com/media/3oKIPnAiaCRi8RRSg0/giphy.gif" width="100%" height="200" style="object-fit:cover; border-radius:12px; margin: 16px 0;" alt="RGB Cyber Architecture" />
 
 ### India's Most Ambitious Gen AI CFO Platform
 
@@ -50,7 +50,7 @@ Think of it as having a **Goldman Sachs CFO, a tax wizard, a debt strategist, an
 
 ## 🧠 System Architecture
 
-<img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjIyMWNrdG91N3N1cDV6eGFndjRxczlkbjEwbGNoMW4zdzdqcDA4YSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26tn4z1AL6JVIfEek/giphy.gif" height="80" alt="Data Flow" />
+<img src="https://i.giphy.com/media/26tn4z1AL6JVIfEek/giphy.gif" height="80" alt="Data Flow" />
 
 ### 🌟 5-Layer Multi-LLM Agentic Cascade
 Anchor AI guarantees 0% hallucination and 100% uptime through a deterministic LLM fallback chain:
@@ -243,7 +243,7 @@ npm run preview  # → http://localhost:4173
 
 ## 🧬 Tech Stack
 
-<img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXhjdm1udGZyd2s2cXBzNXZsczQxeWhkOGY1emowZHdkZHFyd2FmdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/VDIgRzV985NUIFf16P/giphy.gif" alt="System Status" width="100%" height="40" style="object-fit:cover;" />
+<img src="https://i.giphy.com/media/l41lOjeQkEk0a0U2A/giphy.gif" alt="System Status" width="100%" height="40" style="object-fit:cover;" />
 
 ```
 Frontend Framework  →  React 18.3 + TypeScript 5.7
@@ -302,7 +302,7 @@ Andy AI speaks 9 languages natively, with voice synthesis matching the language 
 
 ## 🔐 Enterprise-Grade Security
 
-<img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWwzejB5cGNlZXJ0eTZ4aDdwNTIzNXc1cnp5dzV1emwybjFwZXlwayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/TFO2mwVPId14f4mU4v/giphy.gif" height="60" alt="Security Lock" />
+<img src="https://i.giphy.com/media/3o7TKSjRrfIPjeiVy8/giphy.gif" height="60" alt="Security Lock" />
 
 - ✅ All API keys via environment variables only (never hardcoded)
 - ✅ `.env` in `.gitignore` — never committed to version control
