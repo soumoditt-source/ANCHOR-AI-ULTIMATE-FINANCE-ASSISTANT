@@ -390,7 +390,7 @@ export const useStore = create<AppState>()(
         const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
         const orKey = import.meta.env.VITE_OPENROUTER_API_KEY || '';
         const groqKey = import.meta.env.VITE_GROQ_API_KEY || '';
-        const mistralKey = 'ChsxRdWD7hZKhgcuAOdRbmvKYYMUAXIw';
+        const mistralKey = import.meta.env.VITE_MISTRAL_API_KEY || '';
         
         try {
           const { user, debts, currency, language, appMode } = get();
