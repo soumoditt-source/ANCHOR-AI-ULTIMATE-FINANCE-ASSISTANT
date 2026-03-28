@@ -387,8 +387,10 @@ export const useStore = create<AppState>()(
           get().andySpeak(text.replace(/[\*\#]/g, ''));
         };
 
-        const key = geminiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
+        const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
         const orKey = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+        const groqKey = import.meta.env.VITE_GROQ_API_KEY || '';
+        const mistralKey = 'ChsxRdWD7hZKhgcuAOdRbmvKYYMUAXIw';
         
         try {
           const { user, debts, currency, language, appMode } = get();
@@ -397,54 +399,76 @@ export const useStore = create<AppState>()(
           const lang = LANGUAGES[language]?.label || 'English';
           const currSym = CURRENCIES[currency]?.symbol || '₹';
           const ctx = `User: ${user?.name || 'Commander'}. Monthly income: ${currSym}${income.toLocaleString()}. ${debts.length} debts totaling ${currSym}${totalDebt.toLocaleString()}. Currency: ${currency} (${currSym}). Mode: ${appMode}. Location: India.`;
-          const systemPrompt = `You are Andy AI 🤖 — an elite personal CFO and financial advisor for India. You speak ${lang}. You are smart, warm, direct, and give actionable advice. Always use ${currency} currency with ${currSym} symbol. Apply Indian financial context: SEBI regulations, NSE/BSE markets, 80C/80D deductions, NPS, PPF, Sukanya Samriddhi, FIRE planning in Indian context, EMI culture, RBI guidelines. Context: ${ctx}\n\nUser: ${msg}\n\nRespond in 3-4 sentences, be specific, practical, and cite actual numbers. Respond in ${lang}.`;
+          const systemPrompt = `You are Andy AI 🤖 — an elite personal CFO and financial advisor for India. You speak clearly in ${lang}. You are highly analytical, precise, and give actionable mathematical advice. Always use ${currency} currency with ${currSym} symbol. Use Indian financial context: SEBI, NSE/BSE, 80C/80D, NPS, PPF, Sukanya Samriddhi, FIRE planning. Do NOT hallucinate data. Be very exact. Context: ${ctx}\n\nUser Question: ${msg}\n\nRespond in 3-4 sentences. Be strictly factual and highly specific.`;
           
-          if (orKey) {
-            // OpenRouter reasoning framework
-            const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-              method: "POST",
-              headers: { "Authorization": `Bearer ${orKey}`, "Content-Type": "application/json" },
-              body: JSON.stringify({
-                model: "google/gemini-2.0-flash-lite-preview-02-05:free",
-                messages: [
-                  { role: "system", content: systemPrompt },
-                  { role: "user", content: msg }
-                ]
-              })
-            });
-            if (!res.ok) throw new Error("OpenRouter API error");
-            const data = await res.json();
-            const text = data.choices?.[0]?.message?.content;
-            if (text) { finish(text); return; }
-          } else if (key) {
-            // Gemini direct
-            const res = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-              { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }],
-                  generationConfig: { temperature: 0.8, maxOutputTokens: 400 } }) }
-            );
-            if (!res.ok) {
-              const errText = await res.text();
-              console.error('[Andy AI] Gemini API error:', res.status, errText);
-              finish(`Andy encountered an API issue (${res.status}). Let's get back to basics: ${AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]}`);
-              return;
-            }
-            const data = await res.json();
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) { finish(text); return; }
-          } else if (window.puter) {
-             // @ts-ignore
-             const res = await window.puter.ai.chat(systemPrompt, { model: 'claude-3-5-sonnet' });
-             finish(res?.text || res?.message?.content || String(res) || AI_RESPONSES[0]);
-             return;
+          let responseText = '';
+
+          // 1. Gemini AI Studio (Primary)
+          if (geminiKey && !responseText) {
+            try {
+              const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 500 } })
+              });
+              const data = await res.json();
+              if (res.ok && data?.candidates?.[0]?.content?.parts?.[0]?.text) responseText = data.candidates[0].content.parts[0].text;
+            } catch (e) { console.warn('Gemini failed', e); }
           }
 
-          finish('⚠️ No Gemini or OpenRouter API key found. Please add VITE_GEMINI_API_KEY or VITE_OPENROUTER_API_KEY.');
+          // 2. Groq Llama 3 Backup
+          if (groqKey && !responseText) {
+            try {
+              const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST", headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "system", content: systemPrompt }, { role: "user", content: msg }], temperature: 0.4 })
+              });
+              const data = await res.json();
+              if (res.ok && data.choices?.[0]?.message?.content) responseText = data.choices[0].message.content;
+            } catch (e) { console.warn('Groq failed', e); }
+          }
+
+          // 3. Mistral API Backup (Provided Key)
+          if (!responseText) {
+            try {
+              const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+                method: "POST", headers: { "Authorization": `Bearer ${mistralKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ model: "mistral-large-latest", messages: [{ role: "system", content: systemPrompt }, { role: "user", content: msg }], temperature: 0.3 })
+              });
+              const data = await res.json();
+              if (res.ok && data.choices?.[0]?.message?.content) responseText = data.choices[0].message.content;
+            } catch (e) { console.warn('Mistral failed', e); }
+          }
+
+          // 4. OpenRouter Backup
+          if (orKey && !responseText) {
+            try {
+              const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST", headers: { "Authorization": `Bearer ${orKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ model: "google/gemini-2.0-flash-lite-preview-02-05:free", messages: [{ role: "system", content: systemPrompt }, { role: "user", content: msg }] })
+              });
+              const data = await res.json();
+              if (res.ok && data.choices?.[0]?.message?.content) responseText = data.choices[0].message.content;
+            } catch (e) { console.warn('OpenRouter failed', e); }
+          }
+
+          // 5. Puter Multi-Agent Fallback
+          // @ts-ignore
+          if (!responseText && window.puter) {
+            try {
+              // @ts-ignore
+              const res = await window.puter.ai.chat(systemPrompt, { model: 'claude-3-5-sonnet' });
+              responseText = res?.text || res?.message?.content || String(res);
+            } catch (e) { console.warn('Puter failed', e); }
+          }
+
+          if (responseText) {
+            finish(responseText);
+          } else {
+            finish('⚠️ All APIs (Gemini, Groq, Mistral, OpenRouter) are currently at capacity or missing keys. Andy fallback:\n' + AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]);
+          }
         } catch (err) {
-          console.error('[Andy AI] sendChat error:', err);
-          await new Promise(r => setTimeout(r, 400));
-          finish(AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]);
+          console.error('[Andy AI] sendChat critical error:', err);
+          finish('System encountered an error processing your request. Please try again.');
         }
       },
 
@@ -457,19 +481,19 @@ export const useStore = create<AppState>()(
           // Free Multi-agent fallback Puter capability for Vision
           // @ts-ignore
           if (!key && window.puter) {
-            set({ scanLoading: false, scannedDoc: '⚠️ Document Vision requires Gemini Flash 1.5. Please add VITE_GEMINI_API_KEY inside .env. (Puter text AI is active, but Vision needs Gemini key for Form 16s/Statements).' });
-            return;
+             set({ scanLoading: false, scannedDoc: '⚠️ Document Vision requires Gemini 2.0 Flash. Please add VITE_GEMINI_API_KEY inside .env. (Text AI is using robust Mistral/OpenRouter/Puter fallbacks).' });
+             return;
           } else if (!key) {
-            set({ scannedDoc: '⚠️ Add VITE_GEMINI_API_KEY to .env to enable document scanning.', scanLoading: false });
-            return;
+             set({ scannedDoc: '⚠️ Add VITE_GEMINI_API_KEY to .env to enable document scanning.', scanLoading: false });
+             return;
           }
           const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
             { method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{
                   parts: [
-                    { text: 'You are an expert Indian financial document analyzer. Extract ALL financial data: account numbers (masked), balances, amounts owed, interest rates, EMI amounts, payment due dates, account holder name, bank name, loan type. Then: 1) List key findings as bullet points with exact ₹ amounts. 2) Flag any urgent items (overdue, high interest). 3) Give 2 actionable recommendations.' },
+                    { text: 'You are an expert Indian financial document analyzer. Extract ALL financial data: account numbers (masked), balances, amounts owed, interest rates, EMI amounts, payment due dates, account holder name, bank name, loan type. Then: 1) List key findings as bullet points with exact ₹ amounts. 2) Flag any urgent items (overdue, high interest). 3) Give 2 actionable recommendations. Avoid hallucinations.' },
                     { inline_data: { mime_type: 'image/jpeg', data: base64 } }
                   ]
                 }]
