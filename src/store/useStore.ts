@@ -388,6 +388,7 @@ export const useStore = create<AppState>()(
         };
 
         const key = geminiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
+        const orKey = import.meta.env.VITE_OPENROUTER_API_KEY || '';
         
         try {
           const { user, debts, currency, language, appMode } = get();
@@ -398,34 +399,48 @@ export const useStore = create<AppState>()(
           const ctx = `User: ${user?.name || 'Commander'}. Monthly income: ${currSym}${income.toLocaleString()}. ${debts.length} debts totaling ${currSym}${totalDebt.toLocaleString()}. Currency: ${currency} (${currSym}). Mode: ${appMode}. Location: India.`;
           const systemPrompt = `You are Andy AI 🤖 — an elite personal CFO and financial advisor for India. You speak ${lang}. You are smart, warm, direct, and give actionable advice. Always use ${currency} currency with ${currSym} symbol. Apply Indian financial context: SEBI regulations, NSE/BSE markets, 80C/80D deductions, NPS, PPF, Sukanya Samriddhi, FIRE planning in Indian context, EMI culture, RBI guidelines. Context: ${ctx}\n\nUser: ${msg}\n\nRespond in 3-4 sentences, be specific, practical, and cite actual numbers. Respond in ${lang}.`;
           
-          // Free Multi-Agent / Mistral Fallback via Puter if no API Key!
-          // @ts-ignore
-          if (!key && window.puter) {
-            // @ts-ignore
-            const res = await window.puter.ai.chat(systemPrompt, { model: 'claude-3-5-sonnet' });
-            finish(res?.text || res?.message?.content || String(res) || AI_RESPONSES[0]);
-            return;
-          } else if (!key) {
-            finish('⚠️ No Gemini API key found, and Puter.js failed to load. Please add VITE_GEMINI_API_KEY.');
-            return;
+          if (orKey) {
+            // OpenRouter reasoning framework
+            const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${orKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: "google/gemini-2.0-flash-lite-preview-02-05:free",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: msg }
+                ]
+              })
+            });
+            if (!res.ok) throw new Error("OpenRouter API error");
+            const data = await res.json();
+            const text = data.choices?.[0]?.message?.content;
+            if (text) { finish(text); return; }
+          } else if (key) {
+            // Gemini direct
+            const res = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+              { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }],
+                  generationConfig: { temperature: 0.8, maxOutputTokens: 400 } }) }
+            );
+            if (!res.ok) {
+              const errText = await res.text();
+              console.error('[Andy AI] Gemini API error:', res.status, errText);
+              finish(`Andy encountered an API issue (${res.status}). Let's get back to basics: ${AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]}`);
+              return;
+            }
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) { finish(text); return; }
+          } else if (window.puter) {
+             // @ts-ignore
+             const res = await window.puter.ai.chat(systemPrompt, { model: 'claude-3-5-sonnet' });
+             finish(res?.text || res?.message?.content || String(res) || AI_RESPONSES[0]);
+             return;
           }
 
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,
-            { method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }],
-                generationConfig: { temperature: 0.8, maxOutputTokens: 400 } }) }
-          );
-          if (!res.ok) {
-            const errText = await res.text();
-            console.error('[Andy AI] Gemini API error:', res.status, errText);
-            finish(`Andy encountered an API issue (${res.status}). Let's get back to basics: ${AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]}`);
-            return;
-          }
-          const data = await res.json();
-          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!text) { finish(AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)]); return; }
-          finish(text);
+          finish('⚠️ No Gemini or OpenRouter API key found. Please add VITE_GEMINI_API_KEY or VITE_OPENROUTER_API_KEY.');
         } catch (err) {
           console.error('[Andy AI] sendChat error:', err);
           await new Promise(r => setTimeout(r, 400));
@@ -449,7 +464,7 @@ export const useStore = create<AppState>()(
             return;
           }
           const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
             { method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{
