@@ -316,7 +316,7 @@ export default function App() {
                   >
                     <PageSuspense>
                       {/* id lets AmbientVideo connect its inner-scroll listener */}
-                      <div id="page-content-panel" className="w-full h-full overflow-y-auto overflow-x-hidden">
+                      <div id="page-content-panel" className="w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth scrollbar-thin" style={{ WebkitOverflowScrolling: 'touch' }}>
                         <ActivePage />
                       </div>
                     </PageSuspense>
