@@ -6,7 +6,7 @@
   
   <br />
   <a href="https://anchor-ai-ultimate-finance-assistant-8qy4-l60jprk31.vercel.app/" target="_blank">
-    <img src="https://img.shields.io/badge/🟢_LIVE_DEMO-Vercel_Deployment-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo on Vercel" />
+    <img src="https://img.shields.io/badge/🚀_LAUNCH_LIVE_PLATFORM-Vercel_Deployment-000000?style=for-the-badge&logo=vercel&logoColor=white&style=flat-square&logoWidth=30" alt="Live Demo on Vercel" height="50" />
   </a>
   <br />
 </div>
