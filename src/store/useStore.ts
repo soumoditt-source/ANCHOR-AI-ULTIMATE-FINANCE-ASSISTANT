@@ -382,9 +382,11 @@ export const useStore = create<AppState>()(
       sendChat: async (msg, geminiKey = '') => {
         const userMsg: ChatMessage = { role: 'user', text: msg, ts: Date.now() };
         set(s => ({ chatMessages: [...s.chatMessages, userMsg], chatLoading: true }));
+        const SEBI_DISCLAIMER = '\n\n---\n⚠️ *SEBI Disclaimer: AI-generated financial education only — not licensed investment advice under SEBI Investment Adviser Regulations 2013. Consult a SEBI-registered advisor before investing. Past performance ≠ future returns.*';
         const finish = (text: string) => {
-          set(s => ({ chatMessages: [...s.chatMessages, { role: 'andy', text, ts: Date.now() }], chatLoading: false }));
-          get().andySpeak(text.replace(/[\*\#]/g, ''));
+          const withDisclaimer = text.endsWith('*') || text.includes('SEBI') ? text : text + SEBI_DISCLAIMER;
+          set(s => ({ chatMessages: [...s.chatMessages, { role: 'andy', text: withDisclaimer, ts: Date.now() }], chatLoading: false }));
+          get().andySpeak(text.replace(/[\*\#]/g, '').slice(0, 400));
         };
 
         const finalGeminiKey = geminiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
