@@ -2,7 +2,7 @@
 // pages/Andy.tsx — Full Andy AI chat with voice input/output, document scanning, i18n
 import { memo, useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Mic, MicOff, Volume2, FileText, Upload, Sparkles, X, Camera } from 'lucide-react';
+import { Send, Mic, MicOff, Volume2, FileText, Upload, Sparkles, X, Camera, Bot, Zap } from 'lucide-react';
 import { useStore, LANGUAGES } from '../store/useStore';
 
 export const Andy = memo(function Andy() {
@@ -78,14 +78,23 @@ export const Andy = memo(function Andy() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 ${andyTalking ? 'border-[#00ff88] shadow-[0_0_20px_rgba(0,255,136,0.4)]' : 'border-[#00ff88]/30'} bg-gradient-to-br from-[#0a1628] to-[#0d2040]`}>
-            <span className="text-lg">🤖</span>
+          <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center border-2 ${andyTalking ? 'border-[#00ff88] shadow-[0_0_30px_rgba(0,255,136,0.6)]' : 'border-[#00ff88]/40 shadow-[0_0_15px_rgba(0,255,136,0.15)]'} bg-gradient-to-br from-[#0a1628] to-[#0a2b22] overflow-hidden`}>
+            {andyTalking && (
+              <motion.div className="absolute inset-0 bg-[#00ff88]/20" animate={{ opacity: [0, 0.5, 0] }} transition={{ duration: 1, repeat: Infinity }} />
+            )}
+            <Bot className={`w-6 h-6 ${andyTalking ? 'text-[#00ff88]' : 'text-[#00ff88]/70'}`} />
           </div>
           <div>
-            <h1 className="text-xl font-black text-white">Andy AI</h1>
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#00ff88] animate-pulse" />
-              <p className="text-[10px] text-white/30 font-mono">{andyTalking ? 'SPEAKING...' : 'ONLINE'} · {LANGUAGES[language]?.flag} {LANGUAGES[language]?.label}</p>
+              <h1 className="text-2xl font-black bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Andy AI</h1>
+              <div className="flex items-center gap-1 bg-[#00ff88]/10 border border-[#00ff88]/20 px-2 py-0.5 rounded-full">
+                <Sparkles className="w-3 h-3 text-[#00ff88]" />
+                <span className="text-[9px] font-bold text-[#00ff88] tracking-widest uppercase">Supreme Core</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <div className={`w-1.5 h-1.5 rounded-full bg-[#00ff88] ${andyTalking ? 'animate-pulse' : ''}`} />
+              <p className="text-[10px] text-[#00ff88]/70 font-mono tracking-wide">{andyTalking ? 'AUDIO STREAM ACTIVE...' : 'SYSTEM ONLINE'} · {LANGUAGES[language]?.flag} {LANGUAGES[language]?.label}</p>
             </div>
           </div>
         </div>
