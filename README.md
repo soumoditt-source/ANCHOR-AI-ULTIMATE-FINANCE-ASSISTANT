@@ -1,7 +1,7 @@
 # ⚓ Anchor AI — The Ultimate Autonomous Wealth OS
 
 <div align="center">
-  <img src="/media/1774702780424.jpg" alt="Anchor AI" width="100%">
+  <img src="public/anchor-hero-2.png" alt="Anchor AI Official Banner" width="100%">
   <h3>Enterprise-Grade Personal Finance Orchestration</h3>
   
   <br />
@@ -10,7 +10,7 @@
   </a>
   <br /><br />
   
-  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM2FjM2Y3M2M4YjNjM2Y3M2M4YjNjM2Y3M2M4YjNjM2Y3M2M4YjNjJmN0PWc/3o6gDWzmRuILzybaX6/giphy.gif" width="400" alt="Wealth Building GIF">
+  <img src="public/fin-icons.jpg" width="400" alt="Financial Tools">
 </div>
 
 ---
